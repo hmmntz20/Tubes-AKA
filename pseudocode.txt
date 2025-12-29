@@ -1,0 +1,150 @@
+CONSTANT ROWS : integer = 25
+CONSTANT COLS : integer = 25
+CONSTANT TARGET_COLOR : integer = 0
+CONSTANT FILL_COLOR : integer = 1
+
+type Point <
+    r : integer,
+    c : integer
+>
+
+type adrNote : pointer to Node
+type Node : record <
+    data : Point,
+    next : adrNode
+>
+
+type adrStack : pointer to Stack
+type Stack : record <
+    top : adrNode
+>
+
+type adrQueue : pointer to Queue
+type Queue <
+    front : adrNode
+    rear  : adrNode
+>
+
+function createQueue() -> pointer to Queue
+    kamus
+        q : pointer to Queue
+    algoritma
+        ALLOCATE(q)
+        q->front = NILL
+        q->rear = NILL
+        return q
+endfunction
+
+procedure enqueue(in/out q : adrQueue, in r, c : integer)
+    kamus
+        newNode : adrNode
+    algoritma
+        ALLOCATE(newNode)
+        newNode->data.r = r
+        newNode->data.c = c
+        newNode->next = NILL
+        if (q->rear = NILL) then
+            q->front = newNode
+            q->rear = newNode
+        else
+            q->rear->next = newNode
+            q->rear = newNode
+        endif
+endprocedure
+
+function dequeue(in q : adrQueue) -> Point
+    kamus
+        temp : adrNode
+        val  : Point
+    algoritma
+        if (q->front = NILL) then
+            return Point(-1, -1)
+        endif
+        temp = q->front
+        val  = temp->data
+        q->front = q->front->next
+        if (q->front = NILL) then
+            q->rear = NILL
+        endif
+        return val
+endfunction
+
+function isQueueEmpty(in q : adrQueue) -> boolean
+    return (q->front = NILL)
+endfunction
+
+function createStack() -> pointer to Stack
+    kamus
+        s : adrStack
+    algoritma
+        ALLOCATE(s)
+        s->top = NILL
+        return s
+endfunction
+
+procedure push(in/out s : adrStack, in r, c : integer)
+    kamus
+        newNode : adrNode
+    algoritma
+        ALLOCATE(newNode)
+        newNode->data.r = r
+        newNode->data.c = c
+        newNode->next = s->top
+        s->top = newNode
+endprocedure
+
+function pop(in/out s adr Stack) -> Point
+    kamus
+        temp : adrNode
+        val  : Point
+    algoritma
+        if (s->top = NILL) then
+            return Point(-1, -1)
+        endif
+        temp   = s->top
+        val    = temp->data
+        s->top = s->top->next        
+        return val
+endfunction
+
+procedure recursiveStack(in/out grid[ROWS][COLS] : integer, in r, c : integer)
+    algoritma
+        if (r < 0) OR (r >= ROWS) OR (c < 0) OR (c >= COLS) OR (grid[r][c] != TARGET_COLOR) then
+            return
+        endif
+        grid[r][c] = FILL_COLOR
+        recursiveStack(grid, r + 1, c) // Bawah
+        recursiveStack(grid, r - 1, c) // Atas
+        recursiveStack(grid, r, c + 1) // Kanan
+        recursiveStack(grid, r, c - 1) // Kiri
+endprocedure
+
+procedure iterativeQueue(in/out grid[ROWS][COLS] : integer, in startR, startC : integer)
+    kamus
+        Q : adrQueue
+        current : Point
+        r, c, nr, nc, i : integer
+        dr, dc : Array[0..3] of integer
+    algoritma
+        if (grid[startR][startC] NOT TARGET_COLOR) then
+            return
+        endif
+        Q = createQueue()
+        enqueue(Q, startR, startC)
+        grid[startR][startC] = FILL_COLOR
+        dr = [1, -1, 0, 0]
+        dc = [0, 0, 1, -1]
+        while (NOT isQueueEmpty(Q)) do
+            current = dequeue(Q)
+            r = current.r
+            c = current.c
+            for i = 0 to 3 do
+                nr = r + dr[i]
+                nc = c + dc[i]
+                if ((nr >= 0) AND (nr < ROWS) AND (nc >= 0) AND (nc < COLS) AND (grid[nr][nc] == TARGET_COLOR)) then
+                    grid[nr][nc] = FILL_COLOR
+                    enqueue(Q, nr, nc)
+                endif
+            endfor
+        endwhile
+endprocedure
